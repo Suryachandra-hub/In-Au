@@ -3,51 +3,249 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simple CSS Pulse</title>
+    <title>Premium To-Do List</title>
     <style>
-        /* 1. Define the Container (to center the animation) */
+        /* CSS for premium look and feel */
         body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f7f6; /* Light gray background */
             display: flex;
             justify-content: center;
             align-items: center;
             min-height: 100vh;
             margin: 0;
-            background-color: #f0f0f0;
         }
 
-        /* 2. Define the Element to be Animated */
-        .pulse-circle {
-            width: 100px;
-            height: 100px;
-            background-color: #3498db; /* A nice blue color */
-            border-radius: 50%; /* Makes it a circle */
-            box-shadow: 0 0 0 0 rgba(52, 152, 219, 0.7); /* Initial transparent shadow */
-            
-            /* 3. Apply the Animation */
-            animation: pulse 1.5s infinite; /* Name, Duration, Repeat */
+        .container {
+            width: 90%;
+            max-width: 500px;
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1); /* Soft shadow */
         }
 
-        /* 4. Define the Keyframe Animation */
-        @keyframes pulse {
-            0% {
-                /* Start: Smallest size, large transparent shadow */
-                transform: scale(0.95);
-                box-shadow: 0 0 0 0 rgba(52, 152, 219, 0.7);
-            }
-            70% {
-                /* Middle: Slightly bigger, shadow spreads out and fades */
-                transform: scale(1.05);
-                box-shadow: 0 0 0 20px rgba(52, 152, 219, 0); /* 20px spread, fully transparent */
-            }
-            100% {
-                /* End: Return to start state */
-                transform: scale(0.95);
-                box-shadow: 0 0 0 0 rgba(52, 152, 219, 0); 
-            }
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #5cb85c; /* Green underline */
+            padding-bottom: 10px;
+        }
+
+        /* Input Section Styling */
+        #input-form {
+            display: flex;
+            margin-bottom: 25px;
+        }
+
+        #task-input {
+            flex-grow: 1;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 6px 0 0 6px;
+            font-size: 1em;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        #task-input:focus {
+            border-color: #5cb85c;
+        }
+
+        #add-button {
+            padding: 12px 20px;
+            background-color: #5cb85c;
+            color: white;
+            border: none;
+            border-radius: 0 6px 6px 0;
+            cursor: pointer;
+            font-size: 1em;
+            transition: background-color 0.3s;
+        }
+
+        #add-button:hover {
+            background-color: #4cae4c;
+        }
+
+        /* Task List Styling */
+        #task-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .task-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            margin-bottom: 10px;
+            background-color: #f9f9f9;
+            border: 1px solid #eee;
+            border-radius: 6px;
+            transition: background-color 0.3s;
+        }
+
+        .task-item.completed {
+            background-color: #e0f2e0; /* Light green for completed */
+        }
+
+        .task-text {
+            flex-grow: 1;
+            margin-right: 10px;
+            cursor: pointer;
+            word-break: break-word; /* Prevents overflow */
+        }
+
+        .task-item.completed .task-text {
+            text-decoration: line-through;
+            color: #888;
+        }
+
+        /* Action Buttons Styling */
+        .actions button {
+            padding: 8px;
+            margin-left: 8px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: opacity 0.3s;
+            font-weight: bold;
+        }
+
+        .actions .complete-btn {
+            background-color: #007bff; /* Blue */
+            color: white;
+        }
+        
+        .actions .delete-btn {
+            background-color: #dc3545; /* Red */
+            color: white;
+        }
+
+        .actions button:hover {
+            opacity: 0.8;
         }
     </style>
 </head>
 <body>
-    <div class="pulse-circle"></div>
+
+    <div class="container">
+        <h1>📝 To-Do List</h1>
+        
+        <form id="input-form">
+            <input type="text" id="task-input" placeholder="Add a new task..." required>
+            <button type="submit" id="add-button">Add</button>
+        </form>
+
+        <ul id="task-list">
+            </ul>
+    </div>
+
+    <script>
+        // JavaScript Logic
+        const form = document.getElementById('input-form');
+        const input = document.getElementById('task-input');
+        const taskList = document.getElementById('task-list');
+
+        // --- 1. Load Tasks from Local Storage ---
+        document.addEventListener('DOMContentLoaded', loadTasks);
+
+        function getTasks() {
+            // Get tasks from localStorage, or return an empty array if none exist
+            return JSON.parse(localStorage.getItem('tasks')) || [];
+        }
+
+        function saveTasks(tasks) {
+            localStorage.setItem('tasks', JSON.stringify(tasks));
+        }
+
+        function loadTasks() {
+            const tasks = getTasks();
+            tasks.forEach(task => addTaskToDOM(task));
+        }
+
+        // --- 2. Add New Task ---
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const text = input.value.trim();
+            if (text === '') return;
+
+            const newTask = {
+                id: Date.now(),
+                text: text,
+                completed: false
+            };
+
+            // Add to DOM and Storage
+            addTaskToDOM(newTask);
+            saveNewTask(newTask);
+
+            input.value = ''; // Clear input
+        });
+
+        function saveNewTask(newTask) {
+            const tasks = getTasks();
+            tasks.push(newTask);
+            saveTasks(tasks);
+        }
+
+        // --- 3. Render Task Item ---
+        function addTaskToDOM(task) {
+            const listItem = document.createElement('li');
+            listItem.classList.add('task-item');
+            if (task.completed) {
+                listItem.classList.add('completed');
+            }
+            listItem.setAttribute('data-id', task.id);
+
+            listItem.innerHTML = `
+                <span class="task-text">${task.text}</span>
+                <div class="actions">
+                    <button class="complete-btn">${task.completed ? 'Undo' : 'Complete'}</button>
+                    <button class="delete-btn">Delete</button>
+                </div>
+            `;
+
+            // Append to the list
+            taskList.appendChild(listItem);
+            
+            // Add event listeners directly to the buttons
+            listItem.querySelector('.complete-btn').addEventListener('click', toggleComplete);
+            listItem.querySelector('.delete-btn').addEventListener('click', deleteTask);
+        }
+
+        // --- 4. Toggle Task Completion ---
+        function toggleComplete(e) {
+            const listItem = e.target.closest('.task-item');
+            const id = parseInt(listItem.getAttribute('data-id'));
+            
+            // Toggle DOM class
+            listItem.classList.toggle('completed');
+            e.target.textContent = listItem.classList.contains('completed') ? 'Undo' : 'Complete';
+
+            // Update Storage
+            let tasks = getTasks();
+            const taskIndex = tasks.findIndex(task => task.id === id);
+            if (taskIndex !== -1) {
+                tasks[taskIndex].completed = listItem.classList.contains('completed');
+                saveTasks(tasks);
+            }
+        }
+
+        // --- 5. Delete Task ---
+        function deleteTask(e) {
+            const listItem = e.target.closest('.task-item');
+            const id = parseInt(listItem.getAttribute('data-id'));
+
+            // Remove from DOM
+            listItem.remove();
+
+            // Update Storage
+            let tasks = getTasks();
+            tasks = tasks.filter(task => task.id !== id);
+            saveTasks(tasks);
+        }
+    </script>
 </body>
 </html>
